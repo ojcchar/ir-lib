@@ -8,7 +8,7 @@ public class RetrievalDoc {
 	private String text;
 	private String name;
 	private Integer rank;
-	private float score;
+	private Float score;
 
 	public RetrievalDoc() {
 	}
@@ -90,7 +90,7 @@ public class RetrievalDoc {
 		this.score = score;
 	}
 
-	public float getScore() {
+	public Float getScore() {
 		return this.score;
 	}
 
