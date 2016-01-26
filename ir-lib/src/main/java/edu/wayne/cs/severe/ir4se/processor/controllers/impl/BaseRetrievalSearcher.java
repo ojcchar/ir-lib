@@ -35,7 +35,7 @@ public abstract class BaseRetrievalSearcher extends RetrievalSearcher implements
 		org.apache.lucene.search.BooleanQuery.setMaxClauseCount(1000000);
 	}
 
-	public BaseRetrievalSearcher(String indexPath) throws IOException, SearchException {
+	public BaseRetrievalSearcher(String indexPath, int numResults) throws IOException, SearchException {
 		String field = "text";
 
 		parser = new QueryParser(field, analyzer);
@@ -47,18 +47,20 @@ public abstract class BaseRetrievalSearcher extends RetrievalSearcher implements
 		}
 
 		reader = DirectoryReader.open(FSDirectory.open(fileIndex.toPath()));
-		resultsNumber = reader.numDocs();
+		resultsNumber = numResults;
+		// reader.numDocs();
 		searcher = new IndexSearcher(reader);
 		setSimilarity();
 	}
 
-	public BaseRetrievalSearcher(Directory indexDir) throws IOException, SearchException {
+	public BaseRetrievalSearcher(Directory indexDir, int numResults) throws IOException, SearchException {
 		String field = "text";
 
 		parser = new QueryParser(field, analyzer);
 
 		reader = DirectoryReader.open(indexDir);
-		resultsNumber = reader.numDocs();
+		resultsNumber = numResults;
+		// reader.numDocs();
 		searcher = new IndexSearcher(reader);
 		setSimilarity();
 	}
@@ -98,7 +100,6 @@ public abstract class BaseRetrievalSearcher extends RetrievalSearcher implements
 	@Override
 	public List<RetrievalDoc> searchQuery(Query query) throws SearchException {
 
-		List<RetrievalDoc> retrievedDocs = new ArrayList<RetrievalDoc>();
 		try {
 
 			String txtQuery = query.getTxt();
@@ -110,24 +111,32 @@ public abstract class BaseRetrievalSearcher extends RetrievalSearcher implements
 
 			org.apache.lucene.search.Query luceneQuery = parser.parse(txtQuery);
 
-			TopScoreDocCollector collector = TopScoreDocCollector.create(resultsNumber);
-			searcher.search(luceneQuery, collector);
-			ScoreDoc[] hits = collector.topDocs().scoreDocs;
-
-			for (int i = 0; i < hits.length; i++) {
-
-				RetrievalDoc doc = new RetrievalDoc();
-				doc.setRank(i + 1);
-				doc.setScore(hits[i].score);
-				doc.setId(reader.document(hits[i].doc).getField("docNo").stringValue());
-				doc.setText(reader.document(hits[i].doc).getField("text").stringValue());
-
-				retrievedDocs.add(doc);
-			}
+			return searchQuery(luceneQuery);
 		} catch (IOException | ParseException | NullPointerException e) {
 			SearchException e2 = new SearchException(e.getMessage());
 			ExceptionUtils.addStackTrace(e, e2);
 			throw e2;
+		}
+
+	}
+
+	public List<RetrievalDoc> searchQuery(org.apache.lucene.search.Query query) throws IOException {
+		List<RetrievalDoc> retrievedDocs = new ArrayList<RetrievalDoc>();
+
+		TopScoreDocCollector collector = TopScoreDocCollector.create(resultsNumber);
+		searcher.search(query, collector);
+
+		ScoreDoc[] hits = collector.topDocs().scoreDocs;
+
+		for (int i = 0; i < hits.length; i++) {
+
+			RetrievalDoc doc = new RetrievalDoc();
+			doc.setRank(i + 1);
+			doc.setScore(hits[i].score);
+			doc.setId(reader.document(hits[i].doc).getField("docNo").stringValue());
+			doc.setText(reader.document(hits[i].doc).getField("text").stringValue());
+
+			retrievedDocs.add(doc);
 		}
 
 		return retrievedDocs;

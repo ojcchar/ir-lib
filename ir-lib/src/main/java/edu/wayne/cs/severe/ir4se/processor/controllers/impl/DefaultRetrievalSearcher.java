@@ -11,12 +11,12 @@ import edu.wayne.cs.severe.ir4se.processor.exception.SearchException;
 
 public class DefaultRetrievalSearcher extends BaseRetrievalSearcher implements Closeable {
 
-	public DefaultRetrievalSearcher(String indexPath) throws IOException, SearchException {
-		super(indexPath);
+	public DefaultRetrievalSearcher(String indexPath, int numResults) throws IOException, SearchException {
+		super(indexPath, numResults);
 	}
 
-	public DefaultRetrievalSearcher(Directory index) throws IOException, SearchException {
-		super(index);
+	public DefaultRetrievalSearcher(Directory index, int numResults) throws IOException, SearchException {
+		super(index, numResults);
 	}
 
 	@Override
